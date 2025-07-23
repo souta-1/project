@@ -1,4 +1,10 @@
+#define NOMINMAX
 #include <windows.h>
+#undef min
+#undef max
+
+
+
 #include "MapEdit.h"
 #include <cassert>
 #include "Input.h"
@@ -9,11 +15,13 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <algorithm>
+
 
 
 MapEdit::MapEdit()
-	:GameObject(), myMap_(MAP_WIDTH* MAP_HEIGHT, -1), //‰Šú’l‚ğ-1‚Å20*20‚Ì”z—ñ‚ğ‰Šú‰»‚·‚é
-	isInMapEditArea_(false) //ƒ}ƒbƒvƒGƒfƒBƒ^—Ìˆæ“à‚É‚¢‚é‚©‚Ç‚¤‚©
+	:GameObject(), myMap_(MAP_WIDTH* MAP_HEIGHT, -1), //åˆæœŸå€¤ã‚’-1ã§20*20ã®é…åˆ—ã‚’åˆæœŸåŒ–ã™ã‚‹
+	isInMapEditArea_(false) //ãƒãƒƒãƒ—ã‚¨ãƒ‡ã‚£ã‚¿é ˜åŸŸå†…ã«ã„ã‚‹ã‹ã©ã†ã‹
 {
 	mapEditRect_ = { LEFT_MARGIN, TOP_MARGIN,
 		MAP_WIDTH * MAP_IMAGE_SIZE, MAP_HEIGHT * MAP_IMAGE_SIZE };
@@ -25,22 +33,20 @@ MapEdit::~MapEdit()
 
 void MapEdit::SetMap(Point p, int value)
 {
-	//ƒ}ƒbƒv‚ÌÀ•Wp‚Évalue‚ğƒZƒbƒg‚·‚é
-	//p‚ªA”z—ñ‚Ì”ÍˆÍŠO‚Ì‚Íassert‚É‚Ğ‚Á‚©‚©‚é
+	//ãƒãƒƒãƒ—ã®åº§æ¨™pã«valueã‚’ã‚»ãƒƒãƒˆã™ã‚‹
+	//pãŒã€é…åˆ—ã®ç¯„å›²å¤–ã®æ™‚ã¯assertã«ã²ã£ã‹ã‹ã‚‹
 	assert(p.x >= 0 && p.x < MAP_WIDTH);
 	assert(p.y >= 0 && p.y < MAP_HEIGHT);
-	myMap_[p.y * MAP_WIDTH + p.x] = value; //ysx—ñ‚Évalue‚ğƒZƒbƒg‚·‚é
-
+	myMap_[p.y * MAP_WIDTH + p.x] = value; //yè¡Œxåˆ—ã«valueã‚’ã‚»ãƒƒãƒˆã™ã‚‹
 }
 
 int MapEdit::GetMap(Point p) const
 {
-	//ƒ}ƒbƒv‚ÌÀ•Wp‚Ì’l‚ğæ“¾‚·‚é
-	//p‚ªA”z—ñ‚Ì”ÍˆÍŠO‚Ì‚Íassert‚É‚Ğ‚Á‚©‚©‚é
+	//ãƒãƒƒãƒ—ã®åº§æ¨™pã®å€¤ã‚’å–å¾—ã™ã‚‹
+	//pãŒã€é…åˆ—ã®ç¯„å›²å¤–ã®æ™‚ã¯assertã«ã²ã£ã‹ã‹ã‚‹
 	assert(p.x >= 0 && p.x < MAP_WIDTH);
 	assert(p.y >= 0 && p.y < MAP_HEIGHT);
-	return myMap_[p.y * MAP_WIDTH + p.x]; //ysx—ñ‚Ì’l‚ğæ“¾‚·‚é
-
+	return myMap_[p.y * MAP_WIDTH + p.x]; //yè¡Œxåˆ—ã®å€¤ã‚’å–å¾—ã™ã‚‹
 }
 
 void MapEdit::Update()
@@ -49,17 +55,13 @@ void MapEdit::Update()
 	if (GetMousePoint(&mousePos.x, &mousePos.y) == -1) {
 		return;
 	}
-	// ƒ}ƒEƒX‚ÌÀ•W‚ªƒ}ƒbƒvƒGƒfƒBƒ^—Ìˆæ“à‚É‚¢‚é‚©‚Ç‚¤‚©‚ğ”»’è‚·‚é
+	// ãƒã‚¦ã‚¹ã®åº§æ¨™ãŒãƒãƒƒãƒ—ã‚¨ãƒ‡ã‚£ã‚¿é ˜åŸŸå†…ã«ã„ã‚‹ã‹ã©ã†ã‹ã‚’åˆ¤å®šã™ã‚‹
 	isInMapEditArea_ = mousePos.x >= mapEditRect_.x && mousePos.x <= mapEditRect_.x + mapEditRect_.w &&
 		mousePos.y >= mapEditRect_.y && mousePos.y <= mapEditRect_.y + mapEditRect_.h;
 
-	//¶ã@mapEditRect_.x, mapEditRect_.y
-	//‰Eã@mapEditRect_.x + mapEditRect_.w, mapEditRect_.y
-	//‰E‰º  mapEditRect_.x + mapEditRect_.w, mapEditRect_.y + mapEditRect_.h
-	//¶‰º  mapEditRect_.x, mapEditRect_.y + mapEditRect_.h
-		// ƒOƒŠƒbƒhÀ•W‚É•ÏŠ·
+	// ã‚°ãƒªãƒƒãƒ‰åº§æ¨™ã«å¤‰æ›
 	if (!isInMapEditArea_) {
-		return; //ƒ}ƒbƒvƒGƒfƒBƒ^—ÌˆæŠO‚È‚ç‰½‚à‚µ‚È‚¢
+		return; //ãƒãƒƒãƒ—ã‚¨ãƒ‡ã‚£ã‚¿é ˜åŸŸå¤–ãªã‚‰ä½•ã‚‚ã—ãªã„
 	}
 
 	int gridX = (mousePos.x - LEFT_MARGIN) / MAP_IMAGE_SIZE;
@@ -68,36 +70,70 @@ void MapEdit::Update()
 	drawAreaRect_ = { LEFT_MARGIN + gridX * MAP_IMAGE_SIZE, TOP_MARGIN + gridY * MAP_IMAGE_SIZE,
 		MAP_IMAGE_SIZE, MAP_IMAGE_SIZE };
 
-	//ƒ}ƒEƒX‚Ìƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½‚çA‚Á‚Ä‚é‰æ‘œ‚ğ‚»‚ÌÀ•W‚É“\‚é
-	//if (Input::IsButtonDown(MOUSE_INPUT_LEFT)) //¶ƒNƒŠƒbƒN‚Åƒ}ƒbƒv‚É’l‚ğƒZƒbƒg
-	//{
-	//	MapChip* mapChip = FindGameObject<MapChip>();
+	// --- ç¯„å›²é¸æŠï¼‹å¡—ã‚Šã¤ã¶ã—å‡¦ç†ã®è¿½åŠ  ---
+	static bool isDragging = false;
+	static Point dragStartPos = { -1, -1 };
+	static Point dragEndPos = { -1, -1 };
 
-	//	if (CheckHitKey(KEY_INPUT_LSHIFT)) //RƒL[‚ğ‰Ÿ‚µ‚Ä‚¢‚é‚È‚ç
-	//	{
-	//		SetMap({ gridX, gridY }, -1); //ƒ}ƒbƒv‚É’l‚ğƒZƒbƒgi-1‚Í‰½‚à‚È‚¢ó‘Ôj
-	//		return; //ƒ}ƒbƒvƒ`ƒbƒv‚ğíœ‚µ‚½‚ç‚±‚±‚ÅI—¹
-	//	}
-	//	else if (mapChip && mapChip->IsHold()) //ƒ}ƒbƒvƒ`ƒbƒv‚ğ‚Á‚Ä‚¢‚é‚È‚ç
-	//	{
-	//		SetMap({ gridX, gridY }, mapChip->GetHoldImage()); //ƒ}ƒbƒv‚É’l‚ğƒZƒbƒg
-	//	}
-	//}
+	Point mouseGridPos = { gridX, gridY };
 
-	if (Input::IsButtonKeep(MOUSE_INPUT_LEFT)) //¶ƒNƒŠƒbƒN‚Åƒ}ƒbƒv‚É’l‚ğƒZƒbƒg
+	// ãƒãƒƒãƒ—ã‚¨ãƒ‡ã‚£ã‚¿é ˜åŸŸå¤–ãªã‚‰ãƒ‰ãƒ©ãƒƒã‚°çŠ¶æ…‹è§£é™¤ï¼ˆå¿µã®ãŸã‚ï¼‰
+	if (!isInMapEditArea_) {
+		isDragging = false;
+		return;
+	}
+
+	// ãƒã‚¦ã‚¹å·¦ãƒœã‚¿ãƒ³æŠ¼ã—ãŸç¬é–“ã«ãƒ‰ãƒ©ãƒƒã‚°é–‹å§‹ä½ç½®ã‚’è¨˜éŒ²
+	if (Input::IsButtonDown(MOUSE_INPUT_LEFT)) {
+		isDragging = true;
+		dragStartPos = mouseGridPos;
+	}
+
+	// ãƒã‚¦ã‚¹å·¦ãƒœã‚¿ãƒ³æŠ¼ã—ã¦ã„ã‚‹é–“ã¯ãƒ‰ãƒ©ãƒƒã‚°ä¸­ã¨ã¿ãªã—çµ‚äº†ä½ç½®ã‚’æ›´æ–°
+	if (isDragging && Input::IsButtonKeep(MOUSE_INPUT_LEFT)) {
+		dragEndPos = mouseGridPos;
+	}
+
+	// ãƒã‚¦ã‚¹å·¦ãƒœã‚¿ãƒ³é›¢ã—ãŸç¬é–“ã«ç¯„å›²å†…ã‚’å¡—ã‚Šã¤ã¶ã™
+	if (isDragging && Input::IsButtonUP(MOUSE_INPUT_LEFT)) {
+		isDragging = false;
+
+		int startX = std::min(dragStartPos.x, dragEndPos.x);
+		int endX = std::max(dragStartPos.x, dragEndPos.x);
+		int startY = std::min(dragStartPos.y, dragEndPos.y);
+		int endY = std::max(dragStartPos.y, dragEndPos.y);
+
+		MapChip* mapChip = FindGameObject<MapChip>();
+		if (!mapChip || !mapChip->IsHold()) return; // ãƒãƒƒãƒ—ãƒãƒƒãƒ—æŒã£ã¦ãªã„ãªã‚‰ä½•ã‚‚ã—ãªã„
+
+		int tileToSet = mapChip->GetHoldImage();
+
+		for (int y = startY; y <= endY; y++) {
+			for (int x = startX; x <= endX; x++) {
+				// ç¯„å›²å¤–ã‚¬ãƒ¼ãƒ‰
+				if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) continue;
+				SetMap({ x,y }, tileToSet);
+			}
+		}
+		return; // ç¯„å›²å¡—ã‚Šã¤ã¶ã—æ™‚ã¯ä»¥é™ã®1ã‚»ãƒ«æç”»å‡¦ç†ã‚’ã‚¹ã‚­ãƒƒãƒ—ï¼ˆé‡è¤‡é˜²æ­¢ï¼‰
+	}
+
+	// --- ç¯„å›²é¸æŠãªã—æ™‚ã®å˜ã‚»ãƒ«ç·¨é›†ï¼ˆå¾“æ¥ã®å·¦ã‚¯ãƒªãƒƒã‚¯å¡—ã‚Šã¤ã¶ã—ï¼†ã‚·ãƒ•ãƒˆã§æ¶ˆã—ï¼‰ ---
+	if (Input::IsButtonKeep(MOUSE_INPUT_LEFT)) //å·¦ã‚¯ãƒªãƒƒã‚¯ã§ãƒãƒƒãƒ—ã«å€¤ã‚’ã‚»ãƒƒãƒˆ
 	{
 		MapChip* mapChip = FindGameObject<MapChip>();
 
-		if (CheckHitKey(KEY_INPUT_LSHIFT)) //RƒL[‚ğ‰Ÿ‚µ‚Ä‚¢‚é‚È‚ç
+		if (CheckHitKey(KEY_INPUT_LSHIFT)) //LShiftã‚­ãƒ¼ã‚’æŠ¼ã—ã¦ã„ã‚‹ãªã‚‰
 		{
-			SetMap({ gridX, gridY }, -1); //ƒ}ƒbƒv‚É’l‚ğƒZƒbƒgi-1‚Í‰½‚à‚È‚¢ó‘Ôj
-			return; //ƒ}ƒbƒvƒ`ƒbƒv‚ğíœ‚µ‚½‚ç‚±‚±‚ÅI—¹
+			SetMap({ gridX, gridY }, -1); //ãƒãƒƒãƒ—ã«å€¤ã‚’ã‚»ãƒƒãƒˆï¼ˆ-1ã¯ä½•ã‚‚ãªã„çŠ¶æ…‹ï¼‰
+			return; //ãƒãƒƒãƒ—ãƒãƒƒãƒ—ã‚’å‰Šé™¤ã—ãŸã‚‰ã“ã“ã§çµ‚äº†
 		}
-		else if (mapChip && mapChip->IsHold()) //ƒ}ƒbƒvƒ`ƒbƒv‚ğ‚Á‚Ä‚¢‚é‚È‚ç
+		else if (mapChip && mapChip->IsHold()) //ãƒãƒƒãƒ—ãƒãƒƒãƒ—ã‚’æŒã£ã¦ã„ã‚‹ãªã‚‰
 		{
-			SetMap({ gridX, gridY }, mapChip->GetHoldImage()); //ƒ}ƒbƒv‚É’l‚ğƒZƒbƒg
+			SetMap({ gridX, gridY }, mapChip->GetHoldImage()); //ãƒãƒƒãƒ—ã«å€¤ã‚’ã‚»ãƒƒãƒˆ
 		}
 	}
+
 	if (Input::IsKeyDown(KEY_INPUT_S))
 	{
 		SaveMapData();
@@ -109,14 +145,14 @@ void MapEdit::Update()
 }
 
 void MapEdit::Draw()
-{//”wŒi‚ğ•`‰æ‚·‚é
+{//èƒŒæ™¯ã‚’æç”»ã™ã‚‹
 
-	for (int j = 0;j < MAP_HEIGHT;j++)
+	for (int j = 0; j < MAP_HEIGHT; j++)
 	{
 		for (int i = 0; i < MAP_WIDTH; i++)
 		{
 			int value = GetMap({ i,j });
-			if (value != -1) //-1‚È‚ç‰½‚à•`‰æ‚µ‚È‚¢
+			if (value != -1) //-1ãªã‚‰ä½•ã‚‚æç”»ã—ãªã„
 			{
 				DrawGraph(LEFT_MARGIN + i * MAP_IMAGE_SIZE, TOP_MARGIN + j * MAP_IMAGE_SIZE,
 					value, TRUE);
@@ -142,35 +178,31 @@ void MapEdit::Draw()
 			GetColor(255, 255, 0), TRUE);
 	}
 	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-
-
-
 }
 
 void MapEdit::SaveMapData()
 {
-	//Šæ’£‚Á‚Äƒtƒ@ƒCƒ‹‘I‘ğƒ_ƒCƒAƒƒO‚ğo‚·‰ñ
+	//é ‘å¼µã£ã¦ãƒ•ã‚¡ã‚¤ãƒ«é¸æŠãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã‚’å‡ºã™å›
 	TCHAR filename[255] = "";
 	OPENFILENAME ofn = { 0 };
 
 	ofn.lStructSize = sizeof(ofn);
-	//ƒEƒBƒ“ƒhƒE‚ÌƒI[ƒi[eƒEƒBƒ“ƒhƒE‚Ìƒnƒ“ƒhƒ‹
+	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚ªãƒ¼ãƒŠãƒ¼ï¼è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ãƒãƒ³ãƒ‰ãƒ«
 	ofn.hwndOwner = GetMainWindowHandle();
-	ofn.lpstrFilter = "‘S‚Ä‚Ìƒtƒ@ƒCƒ‹ (*.*)\0*.*\0";
+	ofn.lpstrFilter = "å…¨ã¦ã®ãƒ•ã‚¡ã‚¤ãƒ« (*.*)\0*.*\0";
 	ofn.lpstrFile = filename;
 	ofn.nMaxFile = 255;
 	ofn.Flags = OFN_OVERWRITEPROMPT;
 
-
 	if (GetSaveFileName(&ofn))
 	{
-		printfDx("ƒtƒ@ƒCƒ‹‚ª‘I‘ğ‚³‚ê‚½\n");
-		//ƒtƒ@ƒCƒ‹‚ğŠJ‚¢‚ÄAƒZ[ƒu
-		//std::filesystem ƒtƒ@ƒCƒ‹–¼‚¾‚¯æ‚èo‚·
-		//ofstream‚ğŠJ‚­
+		printfDx("ãƒ•ã‚¡ã‚¤ãƒ«ãŒé¸æŠã•ã‚ŒãŸ\n");
+		//ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã„ã¦ã€ã‚»ãƒ¼ãƒ–
+		//std::filesystem ãƒ•ã‚¡ã‚¤ãƒ«åã ã‘å–ã‚Šå‡ºã™
+		//ofstreamã‚’é–‹ã
 		std::ofstream openfile(filename);
-		//ƒtƒ@ƒCƒ‹‚Ì‘I‘ğ‚ªƒLƒƒƒ“ƒZƒ‹
-		printfDx("ƒZ[ƒu‚ªƒLƒƒƒ“ƒZƒ‹\n");
+		//ãƒ•ã‚¡ã‚¤ãƒ«ã®é¸æŠãŒã‚­ãƒ£ãƒ³ã‚»ãƒ«
+		printfDx("ã‚»ãƒ¼ãƒ–ãŒã‚­ãƒ£ãƒ³ã‚»ãƒ«\n");
 		openfile << "#TinyMapData\n";
 
 		MapChip* mc = FindGameObject<MapChip>();
@@ -184,13 +216,13 @@ void MapEdit::SaveMapData()
 				else
 					index = -1;
 
-				if (i == MAP_WIDTH - 1) //ÅŒã‚Ì—v‘f‚È‚ç‰üs‚µ‚È‚¢
+				if (i == MAP_WIDTH - 1) //æœ€å¾Œã®è¦ç´ ãªã‚‰æ”¹è¡Œã—ãªã„
 				{
-					openfile << index; //ÅŒã‚Ì—v‘f‚ÍƒJƒ“ƒ}‚ğ‚Â‚¯‚È‚¢
+					openfile << index; //æœ€å¾Œã®è¦ç´ ã¯ã‚«ãƒ³ãƒã‚’ã¤ã‘ãªã„
 				}
 				else
 				{
-					//ÅŒã‚Ì—v‘fˆÈŠO‚ÍƒJƒ“ƒ}‚ğ‚Â‚¯‚é
+					//æœ€å¾Œã®è¦ç´ ä»¥å¤–ã¯ã‚«ãƒ³ãƒã‚’ã¤ã‘ã‚‹
 					openfile << index << ",";
 				}
 			}
@@ -203,14 +235,14 @@ void MapEdit::SaveMapData()
 
 void MapEdit::LoadMapData()
 {
-	//Šæ’£‚Á‚Äƒtƒ@ƒCƒ‹‘I‘ğƒ_ƒCƒAƒƒO‚ğo‚·‰ñ
+	//é ‘å¼µã£ã¦ãƒ•ã‚¡ã‚¤ãƒ«é¸æŠãƒ€ã‚¤ã‚¢ãƒ­ã‚°ã‚’å‡ºã™å›
 	TCHAR filename[255] = "";
 	OPENFILENAME ifn = { 0 };
 
 	ifn.lStructSize = sizeof(ifn);
-	//ƒEƒBƒ“ƒhƒE‚ÌƒI[ƒi[eƒEƒBƒ“ƒhƒE‚Ìƒnƒ“ƒhƒ‹
+	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚ªãƒ¼ãƒŠãƒ¼ï¼è¦ªã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ãƒãƒ³ãƒ‰ãƒ«
 	ifn.hwndOwner = GetMainWindowHandle();
-	ifn.lpstrFilter = "‘S‚Ä‚Ìƒtƒ@ƒCƒ‹ (*.*)\0*.*\0";
+	ifn.lpstrFilter = "å…¨ã¦ã®ãƒ•ã‚¡ã‚¤ãƒ« (*.*)\0*.*\0";
 	ifn.lpstrFile = filename;
 	ifn.nMaxFile = 255;
 	//ifn.Flags = OFN_OVERWRITEPROMPT;
@@ -219,59 +251,50 @@ void MapEdit::LoadMapData()
 
 	if (GetOpenFileName(&ifn))
 	{
-		printfDx("ƒtƒ@ƒCƒ‹‚ª‘I‘ğ‚³‚ê‚½¨%s\n", filename);
-		//ƒtƒ@ƒCƒ‹‚ğŠJ‚¢‚ÄAƒZ[ƒu
-		//std::filesystem ƒtƒ@ƒCƒ‹–¼‚¾‚¯æ‚èo‚·
-		//ifstream‚ğŠJ‚­ input file stream
+		printfDx("ãƒ•ã‚¡ã‚¤ãƒ«ãŒé¸æŠã•ã‚ŒãŸâ†’%s\n", filename);
+		//ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã„ã¦ã€ã‚»ãƒ¼ãƒ–
+		//std::filesystem ãƒ•ã‚¡ã‚¤ãƒ«åã ã‘å–ã‚Šå‡ºã™
+		//ifstreamã‚’é–‹ã input file stream
 		std::ifstream inputfile(filename);
-		//ƒtƒ@ƒCƒ‹‚ªƒI[ƒvƒ“‚µ‚½‚©‚Ç‚¤‚©‚Íƒ`ƒFƒbƒN‚ª•K—v
+		//ãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ªãƒ¼ãƒ—ãƒ³ã—ãŸã‹ã©ã†ã‹ã¯ãƒã‚§ãƒƒã‚¯ãŒå¿…è¦
 		std::string line;
 
-		//ƒ}ƒbƒvƒ`ƒbƒv‚Ìî•ñ‚ğæ‚è‚½‚¢I
+		//ãƒãƒƒãƒ—ãƒãƒƒãƒ—ã®æƒ…å ±ã‚’å–ã‚ŠãŸã„ï¼
 		MapChip* mc = FindGameObject<MapChip>();
-		myMap_.clear();//ƒ}ƒbƒv‚ğ‹ó‚ÉI
+		myMap_.clear();//ãƒãƒƒãƒ—ã‚’ç©ºã«ï¼
 		while (std::getline(inputfile, line)) {
-			// ‹ós‚ÍƒXƒLƒbƒv
+			// ç©ºè¡Œã¯ã‚¹ã‚­ãƒƒãƒ—
 			if (line.empty()) continue;
 			//printfDx("%s\n", line.c_str());
-			//‚±‚±‚ÉA“Ç‚İ‚İ‚Ìˆ—‚ğ‘‚¢‚Ä‚¢‚­I
+			//ã“ã“ã«ã€èª­ã¿è¾¼ã¿ã®å‡¦ç†ã‚’æ›¸ã„ã¦ã„ãï¼
 			if (line[0] != '#')
 			{
 				std::istringstream iss(line);
-				std::string tmp;//‚±‚ê‚ÉˆêŒÂ‚¸‚Â“Ç‚İ‚ñ‚Å‚¢‚­‚æ
+				std::string tmp;//ã“ã‚Œã«ä¸€å€‹ãšã¤èª­ã¿è¾¼ã‚“ã§ã„ãã‚ˆ
 				while (getline(iss, tmp, ',')) {
 					//if(tmp == -1)
 					//	myMap_.push_back( -1);
 					//else
-					//	myMap_.push_back(mc->GetHandle(tmp)); //ƒ}ƒbƒv‚Éƒnƒ“ƒhƒ‹‚ğƒZƒbƒg
+					//	myMap_.push_back(mc->GetHandle(tmp)); //ãƒãƒƒãƒ—ã«ãƒãƒ³ãƒ‰ãƒ«ã‚’ã‚»ãƒƒãƒˆ
 					printfDx("%s ", tmp.c_str());
 					if (tmp == "-1")
 					{
-						myMap_.push_back(-1); //‰½‚à‚È‚¢ó‘Ô
+						myMap_.push_back(-1); //ä½•ã‚‚ãªã„çŠ¶æ…‹
 					}
 					else
 					{
 						int index = std::stoi(tmp);
 						int handle = mc->GetHandle(index);
-						myMap_.push_back(handle); //ƒ}ƒbƒv‚Éƒnƒ“ƒhƒ‹‚ğƒZƒbƒg
+						myMap_.push_back(handle); //ãƒãƒƒãƒ—ã«ãƒãƒ³ãƒ‰ãƒ«ã‚’ã‚»ãƒƒãƒˆ
 					}
-
-					
 				}
 				printfDx("\n");
 			}
-			//else
-			//{
-			//	MessageBox(nullptr, "ƒtƒ@ƒCƒ‹Œ`®‚ªŠÔˆá‚Á‚Ä‚¢‚Ü‚·", "“Ç‚İ‚İƒGƒ‰[", 
-			//		MB_OK | MB_ICONWARNING);
-			//}
 		}
 	}
 	else
 	{
-		//ƒtƒ@ƒCƒ‹‚Ì‘I‘ğ‚ªƒLƒƒƒ“ƒZƒ‹
-		printfDx("ƒZ[ƒu‚ªƒLƒƒƒ“ƒZƒ‹\n");
+		//ãƒ•ã‚¡ã‚¤ãƒ«ã®é¸æŠãŒã‚­ãƒ£ãƒ³ã‚»ãƒ«
+		printfDx("ã‚»ãƒ¼ãƒ–ãŒã‚­ãƒ£ãƒ³ã‚»ãƒ«\n");
 	}
 }
-
-
